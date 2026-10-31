@@ -60,3 +60,13 @@ $env:COLDCHAIN_DSN = 'host=127.0.0.1 port=5432 dbname=coldchain user=postgres pa
 The backend listens on port `8080`; the simulator posts sensor readings to it. The API includes `GET /api/shipments`, `GET /api/shipment-options`, and `GET /api/shipments/{shipment_id}/telemetry`.
 
 The UI can create shipments with `POST /api/shipments` using a JSON body containing string fields `container_type`, `origin`, and `destination`. Sensor readings are accepted at `POST /api/sensor-data` with `sensor_id`, `shipment_id`, `timestamp`, `status`, `temperature`, and `humidity`; `latitude` and `longitude` are optional. The backend checks that the sensor belongs to the shipment and evaluates temperature violations against the container's configured range.
+
+## Dashboard
+
+Rebuild and restart the backend after changes so its local-origin CORS headers and WebSocket telemetry broadcast are active. A `200` response from `/api/shipments` alone does not confirm that the running executable has CORS enabled; the response must include `Access-Control-Allow-Origin: http://127.0.0.1:5500` when requested from the dashboard origin. From the project root, serve `index.html` over localhost (rather than opening it as a `file://` URL):
+
+```powershell
+python -m http.server 5500
+```
+
+Open `http://127.0.0.1:5500` in a browser. Keep the backend running on port `8080`. The dashboard loads shipment and telemetry history from the API and receives every accepted sensor reading over `/ws`.

@@ -1,5 +1,7 @@
 #include "crow.h"
 #include <pqxx/pqxx>
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -16,6 +18,31 @@
 
 using namespace std;
 using namespace pqxx;
+
+void addLocalDashboardCorsHeaders(const crow::request& request, crow::response& response) {
+    const string origin = request.get_header_value("Origin");
+    const string localPrefixes[] = {
+        "http://localhost:",
+        "http://127.0.0.1:",
+        "http://[::1]:"
+    };
+
+    for (const string& prefix : localPrefixes) {
+        if (origin.compare(0, prefix.size(), prefix) != 0) continue;
+
+        const string port = origin.substr(prefix.size());
+        if (port.empty() || port.size() > 5 ||
+            !all_of(port.begin(), port.end(), [](unsigned char ch) { return isdigit(ch); })) {
+            return;
+        }
+        const int portNumber = stoi(port);
+        if (portNumber < 1 || portNumber > 65535) return;
+
+        response.add_header("Access-Control-Allow-Origin", origin);
+        response.add_header("Vary", "Origin");
+        return;
+    }
+}
 
 #ifdef _WIN32
 extern "C" __declspec(dllimport) int __stdcall SetConsoleOutputCP(unsigned int);
@@ -565,7 +592,7 @@ int main() {
             return crow::response(404, "Sensor is not assigned to this shipment");
         }
 
-        if (result == ShipmentApplicationService::SensorDataResult::TemperatureViolation) {
+        {
             lock_guard<mutex> _(ws_mtx);
             for (auto client : connected_clients) {
                 client->send_text(req.body);
@@ -576,12 +603,16 @@ int main() {
 
     // ROUTE 4: API GetShipmentTelemetry
     CROW_ROUTE(app, "/api/shipments/<string>/telemetry").methods(crow::HTTPMethod::Get)
-    ([&](const crow::request&, string shipmentId) {
+    ([&](const crow::request& req, string shipmentId) {
         crow::json::wvalue telemetryData;
         if (!appService.getShipmentTelemetry(shipmentId, telemetryData)) {
-            return crow::response(500, "Failed to load shipment telemetry");
+            crow::response response(500, "Failed to load shipment telemetry");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
-        return crow::response(telemetryData);
+        crow::response response(telemetryData);
+        addLocalDashboardCorsHeaders(req, response);
+        return response;
     });
 
     // ROUTE 5: API GetShipmentOptions
@@ -596,12 +627,16 @@ int main() {
 
     // ROUTE 6: API GetShipments
     CROW_ROUTE(app, "/api/shipments").methods(crow::HTTPMethod::Get)
-    ([&]() {
+    ([&](const crow::request& req) {
         crow::json::wvalue shipments;
         if (!appService.getShipments(shipments)) {
-            return crow::response(500, "Failed to load shipments");
+            crow::response response(500, "Failed to load shipments");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
-        return crow::response(shipments);
+        crow::response response(shipments);
+        addLocalDashboardCorsHeaders(req, response);
+        return response;
     });
 
     cout << " C++ Backend  port 8080...\n";

@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>Cold Chain | Logistics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "DM Sans", sans-serif;
+      background: #0b1220;
+      color: #e7edf7;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --panel: #111b2b;
+      --panel-raised: #152236;
+      --border: #243248;
+      --muted: #8290a6;
+      --accent: #44d7b6;
+      --good: #39d6a0;
+      --risk: #ff6b73;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(35, 88, 112, .19), transparent 34rem),
+        #0b1220;
+    }
+
+    .shell { width: min(1440px, calc(100% - 56px)); margin: 0 auto; }
+
+    header {
+      min-height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid rgba(130, 144, 166, .16);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(68, 215, 182, .3);
+      border-radius: 13px;
+      background: rgba(68, 215, 182, .1);
+      color: var(--accent);
+      font-size: 22px;
+    }
+    .brand-name { margin: 0; font: 600 18px "Space Grotesk", sans-serif; letter-spacing: -.4px; }
+    .brand-caption { margin: 4px 0 0; color: var(--muted); font-size: 11px; letter-spacing: 1.15px; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    .connection { display: flex; align-items: center; gap: 9px; color: #b6c1d1; font-size: 12px; }
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 12px rgba(57, 214, 160, .7);
+    }
+    .updated { color: var(--muted); font-size: 11px; }
+
+    .alert-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: 300px;
+      padding: 11px 14px;
+      border: 1px solid rgba(255, 107, 115, .29);
+      border-radius: 10px;
+      background: rgba(255, 107, 115, .08);
+      color: #ffb1b5;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .alert-box[hidden] { display: none; }
+    .alert-icon { flex: 0 0 auto; color: var(--risk); font-size: 14px; }
+    .alert-box strong { display: block; margin-bottom: 1px; color: #ff858b; font-size: 10px; letter-spacing: .8px; }
+
+    .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 30px 0 20px;
+    }
+    .eyebrow { margin: 0 0 7px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+    h1 { margin: 0; font: 600 clamp(23px, 3vw, 30px) "Space Grotesk", sans-serif; letter-spacing: -1px; }
+    .subheading { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .live-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .live-label span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 88px;
+      padding: 17px 19px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(21, 34, 54, .96), rgba(17, 27, 43, .96));
+    }
+    .metric-label { margin: 0; color: var(--muted); font-size: 11px; }
+    .metric-value { margin: 6px 0 0; font: 600 24px "Space Grotesk", sans-serif; }
+    .metric-icon {
+      display: grid;
+      width: 37px;
+      height: 37px;
+      place-items: center;
+      border-radius: 11px;
+      background: rgba(68, 215, 182, .1);
+      color: var(--accent);
+      font-size: 17px;
+    }
+    .metric.risk .metric-icon { background: rgba(255, 107, 115, .1); color: var(--risk); }
+
+    .main-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 16px; }
+    .panel {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--panel);
+    }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 62px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(130, 144, 166, .13);
+    }
+    .panel-title { margin: 0; font: 600 13px "Space Grotesk", sans-serif; }
+    .panel-subtitle { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .panel-tag { color: var(--muted); font-size: 10px; }
+    #map { height: 400px; background: #172338; }
+    .leaflet-container { font-family: "DM Sans", sans-serif; }
+    .leaflet-control-attribution { font-size: 9px !important; }
+    .map-legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 11px 18px;
+      border-top: 1px solid rgba(130, 144, 166, .13);
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+    .legend-dot.risk { background: var(--risk); }
+    .chart-wrap { height: 400px; padding: 18px 16px 13px; }
+    #tempChart { width: 100%; height: 100%; }
+
+    .table-panel { margin-top: 16px; }
+    .table-heading { min-height: 66px; }
+    .shipment-count {
+      padding: 5px 9px;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: #b4c0d0;
+      font-size: 10px;
+    }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    thead { background: rgba(255, 255, 255, .018); }
+    th { padding: 12px 18px; color: var(--muted); font-size: 9px; font-weight: 600; letter-spacing: .85px; text-transform: uppercase; }
+    td { padding: 14px 18px; border-top: 1px solid rgba(130, 144, 166, .11); color: #c9d3e1; font-size: 11px; }
+    tbody tr:hover { background: rgba(255, 255, 255, .025); }
+    .shipment-id { color: #eef4fc; font-weight: 600; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 99px;
+      background: rgba(57, 214, 160, .1);
+      color: var(--good);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+    .status-badge::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .status-badge.risk { background: rgba(255, 107, 115, .1); color: var(--risk); }
+    .temperature { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .temperature.risk { color: var(--risk); }
+    .location-cell { color: #9eacc0; }
+    .time-cell { color: var(--muted); font-variant-numeric: tabular-nums; }
+    footer { display: flex; justify-content: space-between; gap: 14px; padding: 17px 0 23px; color: #66758b; font-size: 10px; }
+
+    @media (max-width: 900px) {
+      .shell { width: min(100% - 36px, 720px); }
+      .main-grid { grid-template-columns: 1fr; }
+      .header-right { gap: 14px; }
+      #map, .chart-wrap { height: 360px; }
+    }
+    @media (max-width: 600px) {
+      .shell { width: calc(100% - 28px); }
+      header { align-items: flex-start; flex-direction: column; padding: 16px 0; gap: 14px; }
+      .header-right { width: 100%; align-items: flex-start; flex-wrap: wrap; justify-content: space-between; }
+      .alert-box { max-width: 100%; }
+      .page-heading { align-items: flex-start; flex-direction: column; margin-top: 23px; }
+      .overview { grid-template-columns: 1fr; gap: 9px; }
+      .metric { min-height: 74px; }
+      #map, .chart-wrap { height: 310px; }
+      th, td { padding-right: 13px; padding-left: 13px; }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">❄</div>
+        <div>
+          <p class="brand-name">Northstar <span style="color:#44d7b6">Cold Chain</span></p>
+          <p class="brand-caption">Logistics control center</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection"><span class="connection-dot" id="connectionDot" aria-hidden="true"></span><span id="connectionStatus">Connecting to backend…</span></div>
+        <aside class="alert-box" id="alertBanner" role="alert" hidden>
+          <span class="alert-icon" aria-hidden="true">!</span>
+          <span><strong>TEMPERATURE ALERT</strong><span id="alertMessage"></span></span>
+        </aside>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Operations overview</p>
+          <h1>Shipment monitoring</h1>
+          <p class="subheading">Track your temperature-sensitive cargo in real time.</p>
+        </div>
+        <div class="live-label"><span aria-hidden="true"></span>LIVE MONITORING</div>
+      </section>
+
+      <section class="overview" aria-label="Shipment summary">
+        <article class="metric">
+          <div><p class="metric-label">Active shipments</p><p class="metric-value" id="activeCount">0</p></div>
+          <span class="metric-icon" aria-hidden="true">↗</span>
+        </article>
+        <article class="metric">
+          <div><p class="metric-label">Within safe range</p><p class="metric-value" id="goodCount">0</p></div>
+          <span class="metric-icon" aria-hidden="true">✓</span>
+        </article>
+        <article class="metric risk">
+          <div><p class="metric-label">Need attention</p><p class="metric-value" id="riskCount">0</p></div>
+          <span class="metric-icon" aria-hidden="true">!</span>
+        </article>
+      </section>
+
+      <section class="main-grid" aria-label="Shipment map and temperature history">
+        <article class="panel">
+          <div class="panel-heading">
+            <div><h2 class="panel-title">Live shipment map</h2><p class="panel-subtitle">Current positions across active routes</p></div>
+            <span class="panel-tag">VIETNAM</span>
+          </div>
+          <div id="map" role="application" aria-label="Map showing active shipment locations"></div>
+          <div class="map-legend">
+            <span class="legend-item"><span class="legend-dot"></span>Good condition</span>
+            <span class="legend-item"><span class="legend-dot risk"></span>At risk</span>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div><h2 class="panel-title">Temperature history</h2><p class="panel-subtitle" id="chartSubtitle">Recent readings</p></div>
+            <span class="panel-tag">°C</span>
+          </div>
+          <div class="chart-wrap"><canvas id="tempChart" aria-label="Temperature history chart"></canvas></div>
+        </article>
+      </section>
+
+      <section class="panel table-panel" aria-labelledby="shipments-title">
+        <div class="panel-heading table-heading">
+          <div><h2 class="panel-title" id="shipments-title">Shipment activity</h2><p class="panel-subtitle">Latest sensor readings from monitored cargo</p></div>
+          <span class="shipment-count" id="shipmentCount">0 shipments</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Shipment ID</th><th>Status</th><th>Temp (°C)</th><th>Humidity (%)</th><th>Location</th><th>Time</th></tr>
+            </thead>
+            <tbody id="shipmentRows"><tr><td colspan="6">Loading shipments…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>Cold Chain Logistics Dashboard</span><span>Sample dashboard data · Map © OpenStreetMap contributors</span></footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API_BASE = "http://127.0.0.1:8080";
+    const TEMPERATURE_MIN = 2;
+    const TEMPERATURE_MAX = 8;
+    const shipments = new Map();
+    const markers = new Map();
+    const deviceShipments = new Map();
+    const telemetryHistory = [];
+    let liveUpdateSequence = 0;
+    let websocketConnected = false;
+
+    const map = L.map("map", { scrollWheelZoom: false }).setView([21.0285, 105.8542], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const chartContext = document.getElementById("tempChart").getContext("2d");
+    const gradient = chartContext.createLinearGradient(0, 0, 0, 330);
+    gradient.addColorStop(0, "rgba(68, 215, 182, 0.24)");
+    gradient.addColorStop(1, "rgba(68, 215, 182, 0)");
+
+    const temperatureChart = new Chart(chartContext, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Temperature",
+          data: [],
+          borderColor: "#44d7b6",
+          backgroundColor: gradient,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: "#44d7b6",
+          pointBorderColor: "#111b2b",
+          pointBorderWidth: 2,
+          fill: true,
+          tension: 0.38
+        }, {
+          label: "8°C alert threshold",
+          data: [],
+          borderColor: "#ff6b73",
+          borderWidth: 1.5,
+          borderDash: [6, 5],
+          pointRadius: 0,
+          fill: false
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        interaction: { intersect: false, mode: "index" },
+        plugins: {
+          legend: { display: true, labels: { color: "#8290a6", usePointStyle: true, boxWidth: 7, font: { family: "DM Sans", size: 10 } } },
+          tooltip: {
+            backgroundColor: "#152236",
+            borderColor: "#30415a",
+            borderWidth: 1,
+            titleColor: "#e7edf7",
+            bodyColor: "#44d7b6",
+            displayColors: false,
+            callbacks: { label: (context) => ` ${context.dataset.label}: ${context.parsed.y.toFixed(1)} °C` }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { color: "#8290a6", maxTicksLimit: 6, font: { family: "DM Sans", size: 10 } }
+          },
+          y: {
+            suggestedMin: 0,
+            suggestedMax: 10,
+            border: { display: false },
+            grid: { color: "rgba(130, 144, 166, 0.12)" },
+            ticks: { color: "#8290a6", font: { family: "DM Sans", size: 10 }, callback: (value) => `${value}°` }
+          }
+        }
+      }
+    });
+
+    function setConnectionStatus(connected, message) {
+      document.getElementById("connectionDot").style.background = connected ? "var(--good)" : "var(--risk)";
+      document.getElementById("connectionStatus").textContent = message;
+    }
+
+    function isAtRisk(temperature) {
+      return temperature > TEMPERATURE_MAX || temperature < TEMPERATURE_MIN;
+    }
+
+    function formatTime(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleTimeString();
+    }
+
+    function showTemperatureAlert(shipmentId) {
+      document.getElementById("alertMessage").textContent =
+        `ALERT: Temperature Exceeded on ${shipmentId}!`;
+      document.getElementById("alertBanner").hidden = false;
+    }
+
+    function upsertMarker(shipment) {
+      if (!Number.isFinite(shipment.latitude) || !Number.isFinite(shipment.longitude)) return;
+      const risky = Number.isFinite(shipment.temperature) && isAtRisk(shipment.temperature);
+      const position = [shipment.latitude, shipment.longitude];
+      let marker = markers.get(shipment.id);
+      if (!marker) {
+        marker = L.circleMarker(position, {
+          radius: 8,
+          color: risky ? "#ff6b73" : "#39d6a0",
+          weight: 2,
+          fillColor: risky ? "#ff6b73" : "#39d6a0",
+          fillOpacity: 0.9
+        }).addTo(map);
+        markers.set(shipment.id, marker);
+      } else {
+        marker.setLatLng(position);
+        marker.setStyle({
+          color: risky ? "#ff6b73" : "#39d6a0",
+          fillColor: risky ? "#ff6b73" : "#39d6a0"
+        });
+      }
+      marker.bindPopup(
+        `<strong>${escapeHtml(shipment.id)}</strong><br>${risky ? "AT RISK" : "GOOD"} · ${
+          Number.isFinite(shipment.temperature) ? `${shipment.temperature.toFixed(1)}°C` : "No reading"
+        }`
+      );
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
+
+    function renderShipments() {
+      const rows = document.getElementById("shipmentRows");
+      rows.replaceChildren();
+      let good = 0;
+      let atRisk = 0;
+
+      for (const shipment of shipments.values()) {
+        const risky = Number.isFinite(shipment.temperature) && isAtRisk(shipment.temperature);
+        if (risky) atRisk += 1;
+        else good += 1;
+
+        const row = document.createElement("tr");
+        const cells = [
+          { className: "shipment-id", text: shipment.id },
+          { className: "", badge: risky ? "AT RISK" : "GOOD", risky },
+          { className: `temperature${risky ? " risk" : ""}`, text: Number.isFinite(shipment.temperature) ? `${shipment.temperature.toFixed(1)}°` : "—" },
+          { className: "", text: Number.isFinite(shipment.humidity) ? `${shipment.humidity.toFixed(1)}%` : "—" },
+          { className: "location-cell", text: Number.isFinite(shipment.latitude) && Number.isFinite(shipment.longitude) ? `${shipment.latitude.toFixed(4)}, ${shipment.longitude.toFixed(4)}` : "—" },
+          { className: "time-cell", text: formatTime(shipment.timestamp) }
+        ];
+
+        for (const cell of cells) {
+          const td = document.createElement("td");
+          if (cell.className) td.className = cell.className;
+          if (cell.badge) {
+            const badge = document.createElement("span");
+            badge.className = `status-badge${cell.risky ? " risk" : ""}`;
+            badge.textContent = cell.badge;
+            td.appendChild(badge);
+          } else {
+            td.textContent = cell.text;
+          }
+          row.appendChild(td);
+        }
+        rows.appendChild(row);
+      }
+
+      if (shipments.size === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.textContent = "No shipments found.";
+        row.appendChild(cell);
+        rows.appendChild(row);
+      }
+
+      document.getElementById("activeCount").textContent = String(shipments.size);
+      document.getElementById("goodCount").textContent = String(good);
+      document.getElementById("riskCount").textContent = String(atRisk);
+      document.getElementById("shipmentCount").textContent = `${shipments.size} shipment${shipments.size === 1 ? "" : "s"}`;
+    }
+
+    function addTemperatureReading(shipmentId, timestamp, temperature) {
+      telemetryHistory.push({ shipmentId, timestamp, temperature });
+      if (telemetryHistory.length > 50) telemetryHistory.shift();
+      const labels = telemetryHistory.map((reading) => formatTime(reading.timestamp));
+      temperatureChart.data.labels = labels;
+      temperatureChart.data.datasets[0].data = telemetryHistory.map((reading) => reading.temperature);
+      temperatureChart.data.datasets[1].data = telemetryHistory.map(() => TEMPERATURE_MAX);
+      temperatureChart.update("none");
+      document.getElementById("chartSubtitle").textContent = `Recent readings · ${shipmentId}`;
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
+      return response.json();
+    }
+
+    async function loadInitialData() {
+      const shipmentList = await fetchJson(`${API_BASE}/api/shipments`);
+      if (!Array.isArray(shipmentList)) throw new Error("Shipments API did not return a list");
+
+      for (const item of shipmentList) {
+        if (!item.shipment_id) continue;
+        const shipment = shipments.get(item.shipment_id) || { id: item.shipment_id };
+        Object.assign(shipment, {
+          id: item.shipment_id,
+          status: item.status,
+          origin: item.origin,
+          destination: item.destination
+        });
+        shipments.set(item.shipment_id, shipment);
+      }
+
+      const telemetryResults = await Promise.all(
+        [...shipments.keys()].map(async (shipmentId) => {
+          try {
+            const telemetry = await fetchJson(
+              `${API_BASE}/api/shipments/${encodeURIComponent(shipmentId)}/telemetry`
+            );
+            if (!Array.isArray(telemetry)) throw new Error(`Telemetry for ${shipmentId} did not return a list`);
+            return { shipmentId, telemetry };
+          } catch (error) {
+            console.error(`Could not load telemetry for ${shipmentId}:`, error);
+            return { shipmentId, telemetry: [] };
+          }
+        })
+      );
+
+      for (const { shipmentId, telemetry } of telemetryResults) {
+        const ordered = [...telemetry].reverse();
+        for (const reading of ordered) {
+          if (reading.device_id) deviceShipments.set(reading.device_id, shipmentId);
+          const temperature = Number(reading.temperature);
+          if (Number.isFinite(temperature)) {
+            telemetryHistory.push({
+              shipmentId,
+              timestamp: reading.timestamp,
+              temperature
+            });
+          }
+        }
+
+        const latest = telemetry[0];
+        if (!latest) continue;
+        const shipment = shipments.get(shipmentId);
+        if ((shipment.liveUpdateSequence || 0) === 0) {
+          shipment.temperature = Number(latest.temperature);
+          shipment.humidity = Number(latest.humidity);
+          shipment.latitude = Number(latest.latitude);
+          shipment.longitude = Number(latest.longitude);
+          shipment.timestamp = latest.timestamp;
+        }
+        upsertMarker(shipment);
+      }
+
+      telemetryHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      while (telemetryHistory.length > 50) telemetryHistory.shift();
+      if (telemetryHistory.length) {
+        const selectedShipment = telemetryHistory[telemetryHistory.length - 1].shipmentId;
+        const selectedReadings = telemetryHistory.filter((reading) => reading.shipmentId === selectedShipment);
+        temperatureChart.data.labels = selectedReadings.map((reading) => formatTime(reading.timestamp));
+        temperatureChart.data.datasets[0].data = selectedReadings.map((reading) => reading.temperature);
+        temperatureChart.data.datasets[1].data = selectedReadings.map(() => TEMPERATURE_MAX);
+        temperatureChart.update();
+        document.getElementById("chartSubtitle").textContent = `Recent readings · ${selectedShipment}`;
+      }
+
+      renderShipments();
+    }
+
+    function connectWebSocket() {
+      let retryDelay = 1000;
+      let socket;
+
+      function connect() {
+        socket = new WebSocket("ws://127.0.0.1:8080/ws");
+        socket.addEventListener("open", () => {
+          websocketConnected = true;
+          retryDelay = 1000;
+          setConnectionStatus(true, "Connected to backend");
+        });
+        socket.addEventListener("message", (event) => {
+          let message;
+          try {
+            message = JSON.parse(event.data);
+          } catch (error) {
+            console.error("Ignoring invalid telemetry WebSocket message:", error);
+            return;
+          }
+
+          const payload = message && typeof message.data === "object" ? message.data : message;
+          if (!payload || typeof payload !== "object") {
+            console.error("Ignoring WebSocket message that is not a telemetry object:", message);
+            return;
+          }
+
+          const deviceId = payload.deviceId ?? payload.device_id ?? payload.sensor_id;
+          const shipmentId = payload.shipmentId ?? payload.shipment_id ??
+            (typeof deviceId === "string" ? deviceShipments.get(deviceId) : undefined);
+          const temperature = Number(payload.temperature);
+          if (typeof shipmentId !== "string" || shipmentId.length === 0 || !Number.isFinite(temperature)) {
+            console.error("Ignoring telemetry without a resolvable shipment ID or valid temperature:", payload);
+            return;
+          }
+
+          liveUpdateSequence += 1;
+          let shipment = shipments.get(shipmentId);
+          if (!shipment) {
+            shipment = { id: shipmentId, status: "InTransit" };
+            shipments.set(shipmentId, shipment);
+          }
+
+          if (typeof deviceId === "string" && deviceId.length > 0) {
+            deviceShipments.set(deviceId, shipmentId);
+          }
+          shipment.liveUpdateSequence = liveUpdateSequence;
+          shipment.temperature = temperature;
+          const humidity = Number(payload.humidity);
+          if (Number.isFinite(humidity)) shipment.humidity = humidity;
+          const latitude = Number(payload.latitude);
+          const longitude = Number(payload.longitude);
+          if (Number.isFinite(latitude) && Number.isFinite(longitude) &&
+              latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+            shipment.latitude = latitude;
+            shipment.longitude = longitude;
+          }
+          shipment.timestamp = payload.timestamp;
+          if (payload.status === "VIOLATED" || payload.status === "SAFE") shipment.status = payload.status;
+          upsertMarker(shipment);
+          renderShipments();
+          addTemperatureReading(shipmentId, payload.timestamp, temperature);
+
+          if (isAtRisk(temperature)) showTemperatureAlert(shipmentId);
+        });
+        socket.addEventListener("error", () => {
+          if (!websocketConnected) setConnectionStatus(false, "Backend connection error");
+        });
+        socket.addEventListener("close", () => {
+          websocketConnected = false;
+          setConnectionStatus(false, "Reconnecting to backend…");
+          window.setTimeout(connect, retryDelay);
+          retryDelay = Math.min(retryDelay * 2, 30000);
+        });
+      }
+
+      connect();
+    }
+
+    loadInitialData()
+      .catch((error) => {
+        console.error("Could not load initial shipment data:", error);
+        if (!websocketConnected) setConnectionStatus(false, "Could not load backend data");
+        const rows = document.getElementById("shipmentRows");
+        rows.replaceChildren();
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.textContent = "Could not load shipments. Check that the backend is running and allows this page's origin.";
+        row.appendChild(cell);
+        rows.appendChild(row);
+      });
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
