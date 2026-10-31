@@ -1,0 +1,5 @@
+{
+  "terminal.integrated.env.windows": {
+    "COLDCHAIN_DSN": "postgresql://postgres:GodisDead@localhost:5432/coldchain_db"
+  }
+}

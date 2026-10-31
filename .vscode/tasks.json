@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Cold Chain Simulator",
+			"type": "shell",
+			"command": "${workspaceFolder}\\Simulator\\output\\Simulator.exe",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
