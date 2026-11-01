@@ -39,6 +39,8 @@ void addLocalDashboardCorsHeaders(const crow::request& request, crow::response& 
         if (portNumber < 1 || portNumber > 65535) return;
 
         response.add_header("Access-Control-Allow-Origin", origin);
+        response.add_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response.add_header("Access-Control-Allow-Headers", "Content-Type");
         response.add_header("Vary", "Origin");
         return;
     }
@@ -421,10 +423,13 @@ public:
             work W(C);
 
             result R = W.exec(
-                "SELECT shipment_id, status, "
-                "COALESCE(origin, ''), COALESCE(destination, '') "
-                "FROM shipments "
-                "ORDER BY created_at DESC"
+                "SELECT s.shipment_id, s.status, "
+                "COALESCE(s.origin, ''), COALESCE(s.destination, ''), "
+                "COALESCE(c.container_type, ''), "
+                "COALESCE(c.min_temperature, 2.0), COALESCE(c.max_temperature, 8.0) "
+                "FROM shipments s "
+                "LEFT JOIN containers c ON c.container_id = s.container_id "
+                "ORDER BY s.created_at DESC"
             );
 
             int i = 0;
@@ -433,6 +438,9 @@ public:
                 shipments[i]["status"] = row[1].as<string>();
                 shipments[i]["origin"] = row[2].as<string>();
                 shipments[i]["destination"] = row[3].as<string>();
+                shipments[i]["container_type"] = row[4].as<string>();
+                shipments[i]["min_temperature"] = row[5].as<double>();
+                shipments[i]["max_temperature"] = row[6].as<double>();
                 ++i;
             }
 
@@ -514,12 +522,16 @@ int main() {
     ([&](const crow::request& req) {
         auto json = crow::json::load(req.body);
         if (!json || json.t() != crow::json::type::Object) {
-            return crow::response(400, "Request body must be a JSON object");
+            crow::response response(400, "Request body must be a JSON object");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
         if (!hasStringField(json, "container_type") ||
             !hasStringField(json, "origin") ||
             !hasStringField(json, "destination")) {
-            return crow::response(400, "container_type, origin and destination must be strings");
+            crow::response response(400, "container_type, origin and destination must be strings");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
 
         const string containerType = json["container_type"].s();
@@ -527,7 +539,9 @@ int main() {
         const string destination = json["destination"].s();
 
         if (containerType.empty() || origin.empty() || destination.empty()) {
-            return crow::response(400, "Fields must not be empty");
+            crow::response response(400, "Fields must not be empty");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
 
         string shipmentId;
@@ -536,16 +550,22 @@ int main() {
         );
 
         if (result == ShipmentApplicationService::CreateShipmentResult::UnknownContainerType) {
-            return crow::response(400, "Unknown container_type");
+            crow::response response(400, "Unknown container_type");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
         if (result == ShipmentApplicationService::CreateShipmentResult::Failed) {
-            return crow::response(500, "Failed to create shipment");
+            crow::response response(500, "Failed to create shipment");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
 
         crow::json::wvalue body;
         body["shipment_id"] = shipmentId;
         body["status"] = "InTransit";
-        return crow::response(201, body);
+        crow::response response(201, body);
+        addLocalDashboardCorsHeaders(req, response);
+        return response;
     });
 
     // ROUTE 3: API ProcessSensorData (Gọi Use Case -> Kích hoạt 3 Observers -> Bắn WebSocket)
@@ -617,12 +637,16 @@ int main() {
 
     // ROUTE 5: API GetShipmentOptions
     CROW_ROUTE(app, "/api/shipment-options").methods(crow::HTTPMethod::Get)
-    ([&]() {
+    ([&](const crow::request& req) {
         crow::json::wvalue options;
         if (!appService.getShipmentOptions(options)) {
-            return crow::response(500, "Failed to load shipment options");
+            crow::response response(500, "Failed to load shipment options");
+            addLocalDashboardCorsHeaders(req, response);
+            return response;
         }
-        return crow::response(options);
+        crow::response response(options);
+        addLocalDashboardCorsHeaders(req, response);
+        return response;
     });
 
     // ROUTE 6: API GetShipments
@@ -639,6 +663,18 @@ int main() {
         return response;
     });
 
-    cout << " C++ Backend  port 8080...\n";
-    app.port(8080).multithreaded().run();
+    unsigned short port = 8080;
+    if (const char* configuredPort = getenv("COLDCHAIN_PORT");
+        configuredPort && *configuredPort) {
+        try {
+            const int parsedPort = stoi(configuredPort);
+            if (parsedPort < 1 || parsedPort > 65535) throw out_of_range("port");
+            port = static_cast<unsigned short>(parsedPort);
+        } catch (const exception&) {
+            cerr << "[STARTUP ERROR] COLDCHAIN_PORT must be between 1 and 65535.\n";
+            return 1;
+        }
+    }
+    cout << " C++ Backend  port " << port << "...\n";
+    app.port(port).multithreaded().run();
 }

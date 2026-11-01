@@ -1,0 +1,390 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="1900" viewBox="0 0 3000 1900" role="img" aria-labelledby="title desc">
+  <title id="title">OOP Cold Chain UML overview</title>
+  <desc id="desc">White-background UML and architecture diagram for the cold-chain shipment simulator, backend, dashboard, domain model, and PostgreSQL schema.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/></marker>
+    <marker id="hollowArrow" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/></marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #14213d; }
+      .title { font-size: 46px; font-weight: 700; }
+      .subtitle { font-size: 20px; fill: #52627a; }
+      .panel { fill: #f8fbff; stroke: #2563eb; stroke-width: 3; }
+      .panel-head { fill: #e8f1ff; }
+      .panel-title { font-size: 25px; font-weight: 700; fill: #17439b; }
+      .box { fill: #ffffff; stroke: #3478d4; stroke-width: 2.5; }
+      .box-head { fill: #edf5ff; }
+      .box-title { font-size: 21px; font-weight: 700; fill: #153e83; }
+      .body { font-size: 17px; fill: #26364f; }
+      .small { font-size: 15px; fill: #52627a; }
+      .connector { fill: none; stroke: #2563eb; stroke-width: 3; marker-end: url(#arrow); }
+      .dependency { fill: none; stroke: #4b78b7; stroke-width: 2.5; stroke-dasharray: 9 7; marker-end: url(#arrow); }
+      .relation { fill: none; stroke: #3569aa; stroke-width: 2.5; }
+      .label { font-size: 15px; font-weight: 600; fill: #315a91; }
+      .pill { fill: #ffffff; stroke: #9ab8e6; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="3000" height="1900" fill="#ffffff"/>
+  <text class="title" x="65" y="72">OOP COLD CHAIN — PROJECT UML</text>
+  <text class="subtitle" x="68" y="112">Simulator · Crow backend · Domain model · Dashboard · PostgreSQL</text>
+  <rect class="pill" x="2320" y="42" width="610" height="55" rx="12"/>
+  <text class="small" x="2350" y="76">Blue solid: association / flow   ·   dashed: dependency   ·   hollow arrow: implementation</text>
+
+  <!-- Simulator package -->
+  <rect class="panel" x="60" y="150" width="780" height="650" rx="16"/>
+  <path class="panel-head" d="M76 150 H824 Q840 150 840 166 V205 H60 V166 Q60 150 76 150 Z"/>
+  <text class="panel-title" x="88" y="185">Simulator / C++</text>
+
+  <g>
+    <rect class="box" x="90" y="235" width="340" height="165" rx="10"/>
+    <rect class="box-head" x="90" y="235" width="340" height="48" rx="10"/>
+    <text class="box-title" x="108" y="267">main() / Orchestrator</text>
+    <line x1="90" y1="283" x2="430" y2="283" stroke="#9ab8e6"/>
+    <text class="body" x="108" y="312">Polls InTransit shipments</text>
+    <text class="body" x="108" y="338">Creates tracking contexts</text>
+    <text class="body" x="108" y="364">Advances engine; emits telemetry</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="235" width="330" height="165" rx="10"/>
+    <rect class="box-head" x="475" y="235" width="330" height="48" rx="10"/>
+    <text class="box-title" x="493" y="267">TrackingContext</text>
+    <line x1="475" y1="283" x2="805" y2="283" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="312">shipment: Shipment</text>
+    <text class="body" x="493" y="338">sensorId: string</text>
+    <text class="small" x="493" y="370">One active context per shipment</text>
+  </g>
+  <g>
+    <rect class="box" x="90" y="455" width="340" height="205" rx="10"/>
+    <rect class="box-head" x="90" y="455" width="340" height="48" rx="10"/>
+    <text class="box-title" x="108" y="487">IoTHardwareEngine</text>
+    <line x1="90" y1="503" x2="430" y2="503" stroke="#9ab8e6"/>
+    <text class="body" x="108" y="532">advanceState()</text>
+    <text class="body" x="108" y="558">getTemp() · getHum()</text>
+    <text class="body" x="108" y="584">getLat() · getLon()</text>
+    <text class="small" x="108" y="621">Moves along waypoint legs</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="455" width="330" height="145" rx="10"/>
+    <rect class="box-head" x="475" y="455" width="330" height="48" rx="10"/>
+    <text class="box-title" x="493" y="487">RouteOptimizer</text>
+    <line x1="475" y1="503" x2="805" y2="503" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="532">buildRoute(origin, destination)</text>
+    <text class="body" x="493" y="558">Uses Waypoint + Haversine</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="630" width="330" height="120" rx="10"/>
+    <rect class="box-head" x="475" y="630" width="330" height="44" rx="10"/>
+    <text class="box-title" x="493" y="660">HttpClient</text>
+    <line x1="475" y1="674" x2="805" y2="674" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="705">POST /api/sensor-data</text>
+    <text class="small" x="493" y="730">libcurl · JSON telemetry</text>
+  </g>
+  <path class="connector" d="M430 315 H475"/>
+  <text class="label" x="435" y="302">owns</text>
+  <path class="connector" d="M260 400 V455"/>
+  <text class="label" x="274" y="433">creates</text>
+  <path class="connector" d="M430 550 H475"/>
+  <text class="label" x="436" y="538">uses</text>
+  <path class="dependency" d="M430 365 H450 V690 H475"/>
+  <text class="label" x="438" y="642">sends</text>
+  <text class="small" x="90" y="780">Also queries PostgreSQL for active shipment / device / container data.</text>
+
+  <!-- Dashboard package -->
+  <rect class="panel" x="60" y="830" width="780" height="470" rx="16"/>
+  <path class="panel-head" d="M76 830 H824 Q840 830 840 846 V885 H60 V846 Q60 830 76 830 Z"/>
+  <text class="panel-title" x="88" y="865">Dashboard / Browser</text>
+  <g>
+    <rect class="box" x="90" y="920" width="340" height="320" rx="10"/>
+    <rect class="box-head" x="90" y="920" width="340" height="48" rx="10"/>
+    <text class="box-title" x="108" y="952">index.html</text>
+    <line x1="90" y1="968" x2="430" y2="968" stroke="#9ab8e6"/>
+    <text class="body" x="108" y="998">Shipment list + status groups</text>
+    <text class="body" x="108" y="1026">Map markers + selected route</text>
+    <text class="body" x="108" y="1054">Temperature history chart</text>
+    <text class="body" x="108" y="1082">Create shipment form</text>
+    <text class="body" x="108" y="1122">GET /api/shipments</text>
+    <text class="body" x="108" y="1150">POST /api/shipments</text>
+    <text class="body" x="108" y="1178">WebSocket /ws</text>
+    <text class="small" x="108" y="1215">Local libraries loaded from vendor/</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="920" width="330" height="135" rx="10"/>
+    <rect class="box-head" x="475" y="920" width="330" height="45" rx="10"/>
+    <text class="box-title" x="493" y="951">Leaflet</text>
+    <line x1="475" y1="965" x2="805" y2="965" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="995">Esri basemap · markers · routes</text>
+    <text class="small" x="493" y="1025">OSRM road geometry</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="1075" width="330" height="95" rx="10"/>
+    <rect class="box-head" x="475" y="1075" width="330" height="43" rx="10"/>
+    <text class="box-title" x="493" y="1105">Chart.js</text>
+    <line x1="475" y1="1118" x2="805" y2="1118" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="1148">Temperature chart</text>
+  </g>
+  <text class="small" x="475" y="1210">External map tiles and OSRM require internet.</text>
+
+  <!-- Backend package -->
+  <rect class="panel" x="870" y="150" width="1060" height="1150" rx="16"/>
+  <path class="panel-head" d="M886 150 H1914 Q1930 150 1930 166 V205 H870 V166 Q870 150 886 150 Z"/>
+  <text class="panel-title" x="898" y="185">Backend / Crow + Application Layer</text>
+  <g>
+    <rect class="box" x="900" y="235" width="350" height="190" rx="10"/>
+    <rect class="box-head" x="900" y="235" width="350" height="48" rx="10"/>
+    <text class="box-title" x="918" y="267">Crow HTTP / WebSocket</text>
+    <line x1="900" y1="283" x2="1250" y2="283" stroke="#9ab8e6"/>
+    <text class="body" x="918" y="312">POST /api/sensor-data</text>
+    <text class="body" x="918" y="338">GET /api/shipments, options</text>
+    <text class="body" x="918" y="364">GET telemetry · WS /ws</text>
+    <text class="small" x="918" y="394">CORS for local dashboard</text>
+  </g>
+  <g>
+    <rect class="box" x="1300" y="235" width="590" height="220" rx="10"/>
+    <rect class="box-head" x="1300" y="235" width="590" height="48" rx="10"/>
+    <text class="box-title" x="1318" y="267">ShipmentApplicationService</text>
+    <line x1="1300" y1="283" x2="1890" y2="283" stroke="#9ab8e6"/>
+    <text class="body" x="1318" y="312">createShipment(containerType, origin, destination)</text>
+    <text class="body" x="1318" y="340">processSensorData(TelemetryData)</text>
+    <text class="body" x="1318" y="368">getShipmentTelemetry() · getShipments()</text>
+    <text class="small" x="1318" y="410">Depends on IShipmentRepository + SensorDataPublisher</text>
+  </g>
+  <g>
+    <rect class="box" x="900" y="495" width="350" height="155" rx="10"/>
+    <rect class="box-head" x="900" y="495" width="350" height="48" rx="10"/>
+    <text class="box-title" x="918" y="527">SensorDataPublisher</text>
+    <line x1="900" y1="543" x2="1250" y2="543" stroke="#9ab8e6"/>
+    <text class="body" x="918" y="572">subscribe(observer)</text>
+    <text class="body" x="918" y="600">publish(TelemetryData)</text>
+    <text class="small" x="918" y="628">Event fan-out to observers</text>
+  </g>
+  <g>
+    <rect class="box" x="1300" y="495" width="590" height="125" rx="10"/>
+    <rect class="box-head" x="1300" y="495" width="590" height="48" rx="10"/>
+    <text class="box-title" x="1318" y="527">&lt;&lt;interface&gt;&gt; ISensorObserver</text>
+    <line x1="1300" y1="543" x2="1890" y2="543" stroke="#9ab8e6"/>
+    <text class="body" x="1318" y="577">onSensorData(data) · name()</text>
+  </g>
+  <g>
+    <rect class="box" x="900" y="690" width="300" height="165" rx="10"/>
+    <rect class="box-head" x="900" y="690" width="300" height="48" rx="10"/>
+    <text class="box-title" x="916" y="722">TemperatureAlertHandler</text>
+    <line x1="900" y1="738" x2="1200" y2="738" stroke="#9ab8e6"/>
+    <text class="body" x="916" y="768">Checks temperature range</text>
+    <text class="body" x="916" y="796">Saves violation + alert</text>
+    <text class="small" x="916" y="827">ISensorObserver</text>
+  </g>
+  <g>
+    <rect class="box" x="1230" y="690" width="300" height="165" rx="10"/>
+    <rect class="box-head" x="1230" y="690" width="300" height="48" rx="10"/>
+    <text class="box-title" x="1246" y="722">TelemetryLogger</text>
+    <line x1="1230" y1="738" x2="1530" y2="738" stroke="#9ab8e6"/>
+    <text class="body" x="1246" y="768">Persists sensor readings</text>
+    <text class="body" x="1246" y="796">Temperature · humidity · GPS</text>
+    <text class="small" x="1246" y="827">ISensorObserver</text>
+  </g>
+  <g>
+    <rect class="box" x="1560" y="690" width="330" height="165" rx="10"/>
+    <rect class="box-head" x="1560" y="690" width="330" height="48" rx="10"/>
+    <text class="box-title" x="1576" y="722">QualityEvaluator</text>
+    <line x1="1560" y1="738" x2="1890" y2="738" stroke="#9ab8e6"/>
+    <text class="body" x="1576" y="768">Scores freshness from range</text>
+    <text class="body" x="1576" y="796">Logs quality classification</text>
+    <text class="small" x="1576" y="827">ISensorObserver</text>
+  </g>
+  <g>
+    <rect class="box" x="1270" y="940" width="600" height="210" rx="10"/>
+    <rect class="box-head" x="1270" y="940" width="600" height="48" rx="10"/>
+    <text class="box-title" x="1288" y="972">PostgresShipmentRepository</text>
+    <line x1="1270" y1="988" x2="1870" y2="988" stroke="#9ab8e6"/>
+    <text class="body" x="1288" y="1018">save(Shipment)</text>
+    <text class="body" x="1288" y="1046">findById(shipmentId)</text>
+    <text class="body" x="1288" y="1074">Implements IShipmentRepository</text>
+    <text class="small" x="1288" y="1112">PostgreSQL access via libpqxx</text>
+  </g>
+  <path class="connector" d="M1250 330 H1300"/>
+  <text class="label" x="1254" y="316">dispatch</text>
+  <path class="connector" d="M1460 455 V475 H1075 V495"/>
+  <text class="label" x="1120" y="472">publishes</text>
+  <path class="connector" d="M1250 570 H1300"/>
+  <path class="connector" d="M1595 620 V658 H1050 V690"/>
+  <path class="connector" d="M1595 658 H1380 V690"/>
+  <path class="connector" d="M1595 658 H1725 V690"/>
+  <path class="dependency" d="M1830 455 H1910 V900 H1870 V1015"/>
+  <text class="label" x="1840" y="900">repository</text>
+  <path class="dependency" d="M1820 1150 V1280 H1800"/>
+  <text class="small" x="900" y="1225">The API publishes accepted telemetry to connected dashboard clients via WebSocket.</text>
+
+  <!-- Database / ER model -->
+  <rect class="panel" x="1960" y="150" width="980" height="1150" rx="16"/>
+  <path class="panel-head" d="M1976 150 H2924 Q2940 150 2940 166 V205 H1960 V166 Q1960 150 1976 150 Z"/>
+  <text class="panel-title" x="1988" y="185">PostgreSQL / ER Model</text>
+  <g>
+    <rect class="box" x="2000" y="245" width="420" height="145" rx="10"/>
+    <rect class="box-head" x="2000" y="245" width="420" height="45" rx="10"/>
+    <text class="box-title" x="2018" y="276">containers</text>
+    <line x1="2000" y1="290" x2="2420" y2="290" stroke="#9ab8e6"/>
+    <text class="body" x="2018" y="320">PK container_id</text>
+    <text class="body" x="2018" y="348">type · min_temperature · max_temperature</text>
+    <text class="small" x="2018" y="375">1 container type / temperature range</text>
+  </g>
+  <g>
+    <rect class="box" x="2470" y="245" width="420" height="145" rx="10"/>
+    <rect class="box-head" x="2470" y="245" width="420" height="45" rx="10"/>
+    <text class="box-title" x="2488" y="276">vehicles</text>
+    <line x1="2470" y1="290" x2="2890" y2="290" stroke="#9ab8e6"/>
+    <text class="body" x="2488" y="320">PK vehicle_id</text>
+    <text class="body" x="2488" y="348">license_plate · vehicle_type</text>
+  </g>
+  <g>
+    <rect class="box" x="2000" y="435" width="890" height="170" rx="10"/>
+    <rect class="box-head" x="2000" y="435" width="890" height="45" rx="10"/>
+    <text class="box-title" x="2018" y="466">shipments</text>
+    <line x1="2000" y1="480" x2="2890" y2="480" stroke="#9ab8e6"/>
+    <text class="body" x="2018" y="510">PK shipment_id · FK container_id · FK vehicle_id</text>
+    <text class="body" x="2018" y="540">origin · destination · status · started_at · arrived_at</text>
+    <text class="small" x="2018" y="574">The aggregate root tracked by the application</text>
+  </g>
+  <g>
+    <rect class="box" x="2000" y="650" width="420" height="155" rx="10"/>
+    <rect class="box-head" x="2000" y="650" width="420" height="45" rx="10"/>
+    <text class="box-title" x="2018" y="681">devices</text>
+    <line x1="2000" y1="695" x2="2420" y2="695" stroke="#9ab8e6"/>
+    <text class="body" x="2018" y="725">PK device_id · FK shipment_id</text>
+    <text class="body" x="2018" y="753">device_type · name</text>
+    <text class="small" x="2018" y="780">Belongs to one shipment</text>
+  </g>
+  <g>
+    <rect class="box" x="2470" y="650" width="420" height="155" rx="10"/>
+    <rect class="box-head" x="2470" y="650" width="420" height="45" rx="10"/>
+    <text class="box-title" x="2488" y="681">telemetry_readings</text>
+    <line x1="2470" y1="695" x2="2890" y2="695" stroke="#9ab8e6"/>
+    <text class="body" x="2488" y="725">PK id · FK device_id</text>
+    <text class="body" x="2488" y="753">temperature · humidity · latitude/longitude</text>
+    <text class="small" x="2488" y="780">recorded_at · received_at</text>
+  </g>
+  <g>
+    <rect class="box" x="2235" y="865" width="500" height="155" rx="10"/>
+    <rect class="box-head" x="2235" y="865" width="500" height="45" rx="10"/>
+    <text class="box-title" x="2253" y="896">temperature_alerts</text>
+    <line x1="2235" y1="910" x2="2735" y2="910" stroke="#9ab8e6"/>
+    <text class="body" x="2253" y="940">PK alert_id · FK device_id · temperature</text>
+    <text class="body" x="2253" y="968">min/max · alert_type · occurred_at · status</text>
+    <text class="small" x="2253" y="995">resolved_at</text>
+  </g>
+  <path class="relation" d="M2210 435 V410 H2110 V390" marker-end="url(#arrow)"/>
+  <text class="label" x="2120" y="416">FK</text>
+  <path class="relation" d="M2680 435 V410 H2680 V390" marker-end="url(#arrow)"/>
+  <text class="label" x="2694" y="416">FK</text>
+  <path class="relation" d="M2210 605 V630 H2210 V650" marker-end="url(#arrow)"/>
+  <text class="label" x="2222" y="638">1:N</text>
+  <path class="relation" d="M2420 730 H2470" marker-end="url(#arrow)"/>
+  <text class="label" x="2425" y="716">1:N</text>
+  <path class="relation" d="M2210 805 V835 H2350 V865" marker-end="url(#arrow)"/>
+  <text class="label" x="2222" y="837">1:N</text>
+  <path class="connector" d="M1870 1030 H2000"/>
+  <text class="label" x="1872" y="1015">SQL</text>
+  <text class="small" x="2000" y="1110">Foreign keys: shipments → containers / vehicles; devices → shipments;</text>
+  <text class="small" x="2000" y="1138">telemetry_readings and temperature_alerts → devices.</text>
+  <text class="small" x="2000" y="1195">Simulator also queries shipments, devices and containers directly.</text>
+
+  <!-- Domain model -->
+  <rect class="panel" x="60" y="1330" width="2880" height="500" rx="16"/>
+  <path class="panel-head" d="M76 1330 H2924 Q2940 1330 2940 1346 V1385 H60 V1346 Q60 1330 76 1330 Z"/>
+  <text class="panel-title" x="88" y="1365">Domain Model / domain/DomainModel.cpp</text>
+  <text class="small" x="1810" y="1362">Entities, value objects, aggregate root, domain event, repository contract</text>
+
+  <!-- Domain value objects and event -->
+  <g>
+    <rect class="box" x="90" y="1415" width="350" height="145" rx="10"/>
+    <rect class="box-head" x="90" y="1415" width="350" height="43" rx="10"/>
+    <text class="box-title" x="108" y="1445">Temperature</text>
+    <line x1="90" y1="1458" x2="440" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="108" y="1488">value: double</text><text class="body" x="108" y="1516">unit: string</text>
+  </g>
+  <g>
+    <rect class="box" x="475" y="1415" width="350" height="145" rx="10"/>
+    <rect class="box-head" x="475" y="1415" width="350" height="43" rx="10"/>
+    <text class="box-title" x="493" y="1445">GPSLocation</text>
+    <line x1="475" y1="1458" x2="825" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="493" y="1488">latitude: double</text><text class="body" x="493" y="1516">longitude: double</text>
+  </g>
+  <g>
+    <rect class="box" x="860" y="1415" width="350" height="145" rx="10"/>
+    <rect class="box-head" x="860" y="1415" width="350" height="43" rx="10"/>
+    <text class="box-title" x="878" y="1445">TemperatureRange</text>
+    <line x1="860" y1="1458" x2="1210" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="878" y="1488">minTemp · maxTemp</text><text class="body" x="878" y="1516">isViolated(temp)</text>
+  </g>
+  <g>
+    <rect class="box" x="1245" y="1415" width="390" height="145" rx="10"/>
+    <rect class="box-head" x="1245" y="1415" width="390" height="43" rx="10"/>
+    <text class="box-title" x="1263" y="1445">SensorReading</text>
+    <line x1="1245" y1="1458" x2="1635" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="1263" y="1488">Temperature · GPSLocation</text><text class="body" x="1263" y="1516">humidity · timestamp</text>
+  </g>
+  <g>
+    <rect class="box" x="1670" y="1415" width="430" height="145" rx="10"/>
+    <rect class="box-head" x="1670" y="1415" width="430" height="43" rx="10"/>
+    <text class="box-title" x="1688" y="1445">TemperatureExceededEvent</text>
+    <line x1="1670" y1="1458" x2="2100" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="1688" y="1488">shipmentId · sensorId</text><text class="body" x="1688" y="1516">recordedTemp · timestamp</text>
+  </g>
+  <g>
+    <rect class="box" x="2135" y="1415" width="330" height="145" rx="10"/>
+    <rect class="box-head" x="2135" y="1415" width="330" height="43" rx="10"/>
+    <text class="box-title" x="2153" y="1445">Driver</text>
+    <line x1="2135" y1="1458" x2="2465" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="2153" y="1488">driverId · fullName</text><text class="body" x="2153" y="1516">phoneNumber</text>
+  </g>
+  <g>
+    <rect class="box" x="2500" y="1415" width="350" height="145" rx="10"/>
+    <rect class="box-head" x="2500" y="1415" width="350" height="43" rx="10"/>
+    <text class="box-title" x="2518" y="1445">ColdWarehouse</text>
+    <line x1="2500" y1="1458" x2="2850" y2="1458" stroke="#9ab8e6"/>
+    <text class="body" x="2518" y="1488">warehouseId · name</text><text class="body" x="2518" y="1516">location: GPSLocation</text>
+  </g>
+
+  <!-- Domain entities / contracts -->
+  <g>
+    <rect class="box" x="250" y="1625" width="390" height="150" rx="10"/>
+    <rect class="box-head" x="250" y="1625" width="390" height="43" rx="10"/>
+    <text class="box-title" x="268" y="1655">Sensor</text>
+    <line x1="250" y1="1668" x2="640" y2="1668" stroke="#9ab8e6"/>
+    <text class="body" x="268" y="1698">sensorId · currentTemp</text><text class="body" x="268" y="1726">updateTemp()</text>
+  </g>
+  <g>
+    <rect class="box" x="700" y="1625" width="390" height="150" rx="10"/>
+    <rect class="box-head" x="700" y="1625" width="390" height="43" rx="10"/>
+    <text class="box-title" x="718" y="1655">Container</text>
+    <line x1="700" y1="1668" x2="1090" y2="1668" stroke="#9ab8e6"/>
+    <text class="body" x="718" y="1698">containerId · containerType</text><text class="body" x="718" y="1726">allowedRange · isSuitableFor()</text>
+  </g>
+  <g>
+    <rect class="box" x="1150" y="1625" width="440" height="150" rx="10"/>
+    <rect class="box-head" x="1150" y="1625" width="440" height="43" rx="10"/>
+    <text class="box-title" x="1168" y="1655">Shipment &lt;&lt;aggregate root&gt;&gt;</text>
+    <line x1="1150" y1="1668" x2="1590" y2="1668" stroke="#9ab8e6"/>
+    <text class="body" x="1168" y="1698">container · sensors[] · isCompromised</text><text class="body" x="1168" y="1726">recordTemperature() · domainEvents[]</text>
+  </g>
+  <g>
+    <rect class="box" x="1650" y="1625" width="480" height="150" rx="10"/>
+    <rect class="box-head" x="1650" y="1625" width="480" height="43" rx="10"/>
+    <text class="box-title" x="1668" y="1655">IShipmentRepository</text>
+    <line x1="1650" y1="1668" x2="2130" y2="1668" stroke="#9ab8e6"/>
+    <text class="body" x="1668" y="1698">save(Shipment)</text><text class="body" x="1668" y="1726">findById(shipmentId)</text>
+  </g>
+  <path class="relation" d="M445 1625 V1590 H265 V1560" marker-end="url(#arrow)"/>
+  <text class="label" x="282" y="1590">has Temperature</text>
+  <path class="relation" d="M895 1625 V1590 H1035 V1560" marker-end="url(#arrow)"/>
+  <text class="label" x="910" y="1590">has range</text>
+  <path class="relation" d="M1370 1625 V1590 H1460 V1560" marker-end="url(#arrow)"/>
+  <text class="label" x="1380" y="1590">records</text>
+  <path class="relation" d="M1370 1625 V1605 H445 V1560" marker-end="url(#arrow)"/>
+  <text class="label" x="690" y="1604">contains sensors</text>
+  <path class="dependency" d="M1650 1700 H1590"/>
+  <text class="label" x="1594" y="1690">persists</text>
+  <text class="small" x="2180" y="1690">Backend implementation:</text>
+  <text class="body" x="2180" y="1722">PostgresShipmentRepository</text>
+  <text class="small" x="2180" y="1750">implements the domain contract</text>
+
+  <text class="small" x="70" y="1868">Generated from current source structure. Map tiles: Esri; route geometry: OSRM; persistent data: PostgreSQL.</text>
+</svg>

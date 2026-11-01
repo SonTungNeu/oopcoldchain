@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Cold Chain Dashboard User Guide</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #171717;
+      --muted: #555;
+      --line: #c9c9c9;
+      --green: #15745d;
+      --red: #b9433f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #ededed;
+      color: var(--ink);
+      font: 12pt/1.45 "Times New Roman", Times, serif;
+    }
+    .toolbar {
+      position: sticky;
+      z-index: 2;
+      top: 0;
+      display: flex;
+      justify-content: flex-end;
+      width: min(210mm, calc(100% - 24px));
+      margin: 10px auto 0;
+    }
+    .print-button {
+      padding: 7px 12px;
+      border: 1px solid #444;
+      border-radius: 2px;
+      background: white;
+      color: var(--ink);
+      font: 11pt "Times New Roman", Times, serif;
+      cursor: pointer;
+    }
+    .report-page {
+      width: min(210mm, calc(100% - 24px));
+      min-height: 297mm;
+      margin: 0 auto 16px;
+      padding: 19mm 20mm 18mm;
+      background: white;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, .22);
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 5mm;
+      border-bottom: 1px solid var(--line);
+      color: #333;
+      font-size: 10pt;
+    }
+    .report-title {
+      margin: 10mm 0 3mm;
+      text-align: center;
+      font-size: 17pt;
+      font-weight: 700;
+    }
+    .report-subtitle {
+      margin: 0 0 7mm;
+      text-align: center;
+      color: #333;
+      font-size: 12pt;
+    }
+    figure { margin: 5mm 0 7mm; text-align: center; }
+    figure img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      max-height: 150mm;
+      margin: 0 auto;
+      object-fit: contain;
+    }
+    figcaption {
+      margin-top: 3mm;
+      font-size: 11pt;
+      font-style: italic;
+      text-align: center;
+    }
+    .subsection { margin: 5mm 0 0; }
+    .subsection h2 {
+      margin: 0 0 1mm;
+      font-size: 12pt;
+      font-weight: 700;
+    }
+    p { margin: 1mm 0 2mm; }
+    .label { font-weight: 700; }
+    .steps-label { margin-bottom: 0; }
+    ol { margin: 0 0 2mm; padding-left: 9mm; }
+    ol li { padding-left: 1mm; margin: 0 0 1mm; }
+    .substeps { margin: 1mm 0 1mm; padding-left: 8mm; list-style-type: lower-alpha; }
+    .note { margin-top: 3mm; }
+    .status-line { margin: 1mm 0; }
+    .status-good { color: var(--green); font-weight: 700; }
+    .status-risk { color: var(--red); font-weight: 700; }
+    .page-number { margin-top: 8mm; text-align: right; font-size: 10pt; }
+    .url { overflow-wrap: anywhere; font-family: "Times New Roman", Times, serif; }
+
+    @media (max-width: 650px) {
+      .report-page { padding: 12mm 10mm; }
+      .report-header { gap: 12px; font-size: 9pt; }
+      figure img { max-height: none; }
+    }
+    @media print {
+      @page { size: A4; margin: 0; }
+      body { background: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar { display: none; }
+      .report-page {
+        width: 210mm;
+        height: 297mm;
+        min-height: 0;
+        margin: 0;
+        padding: 18mm 20mm 17mm;
+        box-shadow: none;
+        break-after: page;
+        overflow: hidden;
+      }
+      .report-page:last-child { break-after: auto; }
+      figure img { max-height: 142mm; }
+      .subsection { break-inside: avoid; }
+      figure { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="print-button" type="button" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <main>
+    <section class="report-page">
+      <header class="report-header"><span>Northstar Cold Chain</span><span>Dashboard User Guide</span></header>
+      <h1 class="report-title">Cold Chain Logistics Dashboard</h1>
+      <p class="report-subtitle">User Guide: Shipment Monitoring and Quality Assessment</p>
+
+      <figure>
+        <img src="report-figure-dashboard.png" alt="Current Cold Chain dashboard showing shipment overview and monitoring panels">
+        <figcaption>Figure 1. Main dashboard interface.</figcaption>
+      </figure>
+
+      <section class="subsection">
+        <h2>a. Dashboard Overview</h2>
+        <p><span class="label">Function:</span> The dashboard provides a live summary of shipment activity, temperature alerts, current locations, temperature history, and shipment quality.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Check the connection indicator in the upper-right corner. “Connected to backend” means shipment data and live telemetry are available.</li>
+          <li>Review the three summary values: Active shipments, Within safe range, and Need attention.</li>
+          <li>When a red temperature alert appears, locate the shipment ID in the activity table and select its row for details.</li>
+        </ol>
+      </section>
+
+      <section class="subsection">
+        <h2>b. Creating a Shipment</h2>
+        <figure>
+          <img src="report-figure-create.png" alt="Shipment creation form with container, origin, and destination selections">
+          <figcaption>Figure 2. Interface for creating a new shipment.</figcaption>
+        </figure>
+        <p><span class="label">Function:</span> Creates a shipment and adds it to the monitoring dashboard.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Select the container type, origin, and destination.</li>
+          <li>Select <strong>Create shipment</strong> once and wait for the result message below the form.</li>
+          <li>After a successful response, locate the new shipment in the Shipment activity table.</li>
+        </ol>
+      </section>
+      <div class="page-number">1</div>
+    </section>
+
+    <section class="report-page">
+      <header class="report-header"><span>Northstar Cold Chain</span><span>Shipment Monitoring</span></header>
+      <figure>
+        <img src="report-figure-monitoring.png" alt="Live shipment map and temperature history chart">
+        <figcaption>Figure 3. Live shipment map and temperature history.</figcaption>
+      </figure>
+
+      <section class="subsection">
+        <h2>c. Monitoring Shipment Location and Temperature</h2>
+        <p><span class="label">Function:</span> Displays a shipment’s current map position and recent temperature readings against its container limits.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Select a shipment row in the activity table.</li>
+          <li>Review the map marker, selected route, and destination marker.</li>
+          <li>Read the temperature chart. The solid line is measured temperature; dashed lines indicate the configured minimum and maximum.</li>
+          <li>Use the map zoom controls to inspect the route and nearby locations.</li>
+        </ol>
+      </section>
+
+      <section class="subsection">
+        <h2>d. Reading Shipment Status</h2>
+        <p><span class="label">Function:</span> Groups shipment records by their current operational status.</p>
+        <p class="status-line"><span class="status-good">IN TRANSIT · GOOD</span> indicates the latest temperature is within the configured range.</p>
+        <p class="status-line"><span class="status-risk">AT RISK / COMPROMISED</span> indicates the latest temperature is outside the configured range.</p>
+        <p><strong>ARRIVED</strong> indicates a completed route. Completed shipments remain available for historical review and do not receive further live readings.</p>
+      </section>
+      <div class="page-number">2</div>
+    </section>
+
+    <section class="report-page">
+      <header class="report-header"><span>Northstar Cold Chain</span><span>Search and Quality</span></header>
+      <figure>
+        <img src="report-figure-shipments.png" alt="Shipment table with search, filters, status groups, and quality scores">
+        <figcaption>Figure 4. Shipment activity, filters, and quality assessment.</figcaption>
+      </figure>
+
+      <section class="subsection">
+        <h2>e. Searching and Filtering Shipments</h2>
+        <p><span class="label">Function:</span> Narrows the shipment table by shipment ID, route, product, origin, destination, or status.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Enter a shipment ID or route name in the search field.</li>
+          <li>Select a product, origin, destination, or status from the filter fields. Filters can be combined.</li>
+          <li>Read the result count beside Refresh. Select <strong>All</strong> in each field to clear the filters.</li>
+          <li>Select <strong>Refresh</strong> to reload shipment and telemetry data from the backend.</li>
+        </ol>
+      </section>
+
+      <section class="subsection">
+        <h2>f. Quality Assessment and Completed Shipments</h2>
+        <p><span class="label">Function:</span> The Quality column estimates product quality from the latest temperature’s deviation from the container’s target midpoint.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Read the percentage and classification in the Quality column:
+            <ol class="substeps">
+              <li>FRESH: 80% or higher.</li>
+              <li>MODERATE: 50% to below 80%.</li>
+              <li>POOR: below 50%.</li>
+            </ol>
+          </li>
+          <li>Choose <strong>Completed</strong> in the status filter to review arrived shipments.</li>
+          <li>Select a completed shipment to view its Historical readings and route. The dashboard retains up to 50 recent readings per shipment and shows up to 50 newest completed shipments.</li>
+        </ol>
+        <p class="note"><span class="label">Note:</span> The 50-shipment display limit does not delete older records from the database.</p>
+      </section>
+      <div class="page-number">3</div>
+    </section>
+
+    <section class="report-page">
+      <header class="report-header"><span>Northstar Cold Chain</span><span>Operating Notes</span></header>
+      <section class="subsection">
+        <h2>g. Refreshing Data and Troubleshooting</h2>
+        <p><span class="label">Function:</span> Restores shipment data when the dashboard cannot reach the backend or has not loaded the latest records.</p>
+        <p class="steps-label"><span class="label">Steps:</span></p>
+        <ol>
+          <li>Confirm that the dashboard shows “Connected to backend”.</li>
+          <li>If connection fails, confirm that the backend and PostgreSQL are running.</li>
+          <li>Select <strong>Refresh</strong> after the connection is restored.</li>
+          <li>If map tiles are missing while shipment data is present, check the Internet connection; the map background is provided by an external map service.</li>
+        </ol>
+        <p><span class="label">Current local dashboard address:</span> <span class="url">http://127.0.0.1:5500/?apiPort=8081&amp;wsPort=8080</span></p>
+        <p>The current setup reads shipment records from the updated backend on port 8081 and receives live telemetry from the backend on port 8080.</p>
+      </section>
+
+      <section class="subsection">
+        <h2>Summary</h2>
+        <p>The dashboard combines shipment creation, location tracking, temperature history, status filters, and quality assessment. Select a shipment row to connect the table record with its map route and temperature history.</p>
+      </section>
+      <div class="page-number">4</div>
+    </section>
+  </main>
+</body>
+</html>
