@@ -29,9 +29,9 @@ static size_t curlWriteCb(char* ptr, size_t size, size_t nmemb, void* userdata) 
 
 class HttpClient {
 public:
-    static void sendPostRequest(const string& url, const string& jsonPayload) {
+    static bool sendPostRequest(const string& url, const string& jsonPayload) {
         CURL* curl = curl_easy_init();
-        if (!curl) { cerr << "[HTTP ERROR] curl init failed\n"; return; }
+        if (!curl) { cerr << "[HTTP ERROR] curl init failed\n"; return false; }
         struct curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -41,17 +41,20 @@ public:
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCb);
         CURLcode res = curl_easy_perform(curl);
+        bool accepted = false;
         if (res != CURLE_OK) {
             cerr << "[HTTP ERROR] " << curl_easy_strerror(res) << "\n";
         } else {
             long status = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-            if (status != 200 && status != 201) {
+            accepted = status == 200 || status == 201;
+            if (!accepted) {
                 cerr << "[HTTP ERROR] status " << status << "\n";
             }
         }
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        return accepted;
     }
 };
 
@@ -242,6 +245,23 @@ string getIsoTimestamp() {
     return oss.str();
 }
 
+static bool markShipmentArrived(const string& connStr, const string& shipmentId) {
+    try {
+        connection C(connStr);
+        work W(C);
+        W.exec(
+            "UPDATE shipments SET status = 'Arrived', arrived_at = NOW() "
+            "WHERE shipment_id = $1 AND lower(status) IN ('intransit', 'compromised')",
+            pqxx::params{shipmentId}
+        );
+        W.commit();
+        return true;
+    } catch (const exception& e) {
+        cerr << "[ARRIVAL DB ERROR] " << shipmentId << ": " << e.what() << '\n';
+        return false;
+    }
+}
+
 // Cau truc quan ly Phien theo doi
 struct TrackingContext {
     Shipment shipment; // Aggregate Root
@@ -372,7 +392,13 @@ int main() {
             json << setprecision(2);
 
             cout << "  -> " << json.str() << "\n";
-            HttpClient::sendPostRequest(backend_url, json.str());
+            const bool telemetryAccepted =
+                HttpClient::sendPostRequest(backend_url, json.str());
+            if (hw.hasArrived() && telemetryAccepted &&
+                markShipmentArrived(conn_str, ctx.shipment.getId())) {
+                cout << "  [HOAN TAT] " << ctx.shipment.getId()
+                     << " da duoc cap nhat trang thai Arrived.\n";
+            }
         }
 
         this_thread::sleep_for(chrono::seconds(3));
